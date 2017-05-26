@@ -1,0 +1,10 @@
+[Unit]
+Description=Publishes sensor data to dashboard
+After=network.target
+
+[Service]
+User=pi
+ExecStart=/usr/bin/python /home/pi/dashboard/iotsc_dashboard_v10.py /home/pi/dashboard/output.log /home/pi/dashboard/config.cnf
+
+[Install]
+WantedBy=multi-user.target
