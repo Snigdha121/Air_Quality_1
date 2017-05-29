@@ -1,5 +1,5 @@
 from grove import grovepi
-from grove import grove_light_sensor
+from grove import grove_i2c_digital_light_sensor as grove_light_sensor
 import paho.mqtt.client as mqtt
 import time
 import math
