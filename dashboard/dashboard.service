@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 User=pi
-ExecStart=/usr/bin/python /home/pi/dashboard/iotsc_dashboard_v10.py /home/pi/dashboard/output.log /home/pi/dashboard/config.cnf
+ExecStart=/usr/bin/python /home/pi/iotsc/dashboard/iotsc_dashboard.py /home/pi/iotsc/dashboard/output.log /home/pi/iotsc/dashboard/config.cnf
 
 [Install]
 WantedBy=multi-user.target
