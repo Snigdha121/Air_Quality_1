@@ -119,7 +119,7 @@ while True:
                         logging.debug("Reading DHT temp " + str(data))
                         next_sample[k] = cur_time_ms + interval
                 # DHT Hum
-                if k == 'dht_hum' and cur_time_ms > next_sample[k]:
+                elif k == 'dht_hum' and cur_time_ms > next_sample[k]:
                     [temp, hum] = grovepi.dht(port, 1)
                     if not math.isnan(hum):
                         data = hum
