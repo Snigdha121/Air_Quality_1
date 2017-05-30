@@ -1,5 +1,6 @@
 from grove import grovepi
 from grove import grove_i2c_digital_light_sensor as grove_light_sensor
+
 import paho.mqtt.client as mqtt
 import time
 import math
@@ -10,6 +11,7 @@ import logging
 import configparser
 import argparse
 
+
 # Parse the arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("output_file", help="Output file for log/debug")
@@ -17,7 +19,7 @@ parser.add_argument("input_file", help="Input file with configurations")
 args = parser.parse_args()
 
 # Logging setup
-logging.basicConfig(filename=args.output_file, level=logging.DEBUG, 
+logging.basicConfig(filename=args.output_file, level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
                     filemode='w')
 
@@ -52,7 +54,9 @@ if 'temp_interior' in k:
 if 'temp_exterior' in k:
     grovepi.pinMode(sensors['temp_exterior'][3], "INPUT")
 if 'light_digital' in k:
-    grove_light_sensor.init()
+    _POWER_DOWN = 0x00
+    TSL2561=grove_light_sensor.Tsl2561()
+    TSL2561._init__()
 if 'pir' in k:
     grovepi.pinMode(sensors['pir'][3], "INPUT")
 if 'water' in k:
@@ -116,6 +120,7 @@ while True:
                     [temp, hum] = grovepi.dht(port, 1)
                     if not math.isnan(temp):
                         data = temp
+                        data = float("{0:.2f}".format(data))
                         logging.debug("Reading DHT temp " + str(data))
                         next_sample[k] = cur_time_ms + interval
                 # DHT Hum
@@ -128,6 +133,7 @@ while True:
                 # Temperature interior
                 elif k == 'temp_interior' and cur_time_ms > next_sample[k]:
                     data = round(float(grovepi.temp(port, '1.2')), 2)
+                    data = float("{0:.2f}".format(data))
                     logging.debug("Reading Temperature Interior " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 # Temperature exterior
@@ -137,7 +143,10 @@ while True:
                     next_sample[k] = cur_time_ms + interval
                 # Light Digital
                 elif k == 'light_digital' and cur_time_ms > next_sample[k]:
-                    data = grove_light_sensor.readVisibleLux()
+                    gain=0
+                    val = TSL2561.readLux(gain)
+                    data = val[4]
+                    data = float("{0:.2f}".format(data))
                     logging.debug("Reading Light Digital " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 # PIR
