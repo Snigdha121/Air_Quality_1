@@ -160,7 +160,7 @@ while True:
                 elif k == 'water' and cur_time_ms > next_sample[k]:
                     water = grovepi.digitalRead(port)
                     if water == 0 or water == 1:
-                        data = water
+                        data = 1 - water
                         logging.debug("Reading Water " + str(data))
                         next_sample[k] = cur_time_ms + interval
                 # Vibration

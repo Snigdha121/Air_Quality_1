@@ -163,7 +163,7 @@ _LUX     = None
 class Tsl2561(object):
         i2c = None
         
-        def _init__(self, bus = I2C_SMBUS, addr = I2C_ADDRESS, debug = 1, pause = 0.8):  # set debug = 0 stops debugging output on screen
+        def _init__(self, bus = I2C_SMBUS, addr = I2C_ADDRESS, debug = 0, pause = 0.8):  # set debug = 0 stops debugging output on screen
                 assert(bus is not None)
         	assert(addr > 0b000111 and addr < 0b1111000)
 
