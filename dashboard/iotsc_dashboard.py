@@ -118,32 +118,32 @@ while True:
                 # DHT Temp
                 if k == 'dht_temp' and cur_time_ms > next_sample[k]:
                     [temp, hum] = grovepi.dht(port, 1)
+                    temp = sorted([-40, temp, 50])[1]
                     if not math.isnan(temp):
-                        data = temp
-                        data = float("{0:.2f}".format(data))
+                        data = float("{0:.2f}".format(temp))
                         logging.debug("Reading DHT temp " + str(data))
                         next_sample[k] = cur_time_ms + interval
                 # DHT Hum
                 elif k == 'dht_hum' and cur_time_ms > next_sample[k]:
                     [temp, hum] = grovepi.dht(port, 1)
+                    hum = sorted([5, hum, 99])[1]
                     if not math.isnan(hum):
                         data = hum
                         logging.debug("Reading DHT hum " + str(data))
                         next_sample[k] = cur_time_ms + interval
                 # Temperature interior
                 elif k == 'temp_interior' and cur_time_ms > next_sample[k]:
-                    data = round(float(grovepi.temp(port, '1.2')), 2)
-                    data = float("{0:.2f}".format(data))
+                    data = float("{0:.2}".format(grovepi.temp(port, '1.2')))
                     logging.debug("Reading Temperature Interior " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 # Temperature exterior
                 elif k == 'temp_exterior' and cur_time_ms > next_sample[k]:
-                    data = round(float(grovepi.temp(port, '1.2')), 2)
+                    data = float("{0:.2}".format(grovepi.temp(port, '1.2')))
                     logging.debug("Reading Temperature Exterior " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 # Light Digital
                 elif k == 'light_digital' and cur_time_ms > next_sample[k]:
-                    gain=0
+                    gain = 0
                     val = TSL2561.readLux(gain)
                     data = val[4]
                     data = float("{0:.2f}".format(data))
