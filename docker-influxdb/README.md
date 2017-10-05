@@ -16,3 +16,6 @@ current instance. Here's an example of how to use the HTTP API:
 
 	curl -G http://eclipse.usc.edu:10002/query -u iotsc:anrguscinfluxdb --data-urlencode "q=SHOW USERS"
 
+https://docs.influxdata.com/influxdb/v1.3/query_language/authentication_and_authorization/#authorization
+https://hub.docker.com/_/influxdb/
+

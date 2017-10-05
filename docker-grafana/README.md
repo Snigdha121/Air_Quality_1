@@ -1,4 +1,4 @@
-HARIOT Grafana Docker Image
+IoTSC Grafana Docker Image
 
  * Current Version: 4.5.2
  * Current URL: http://eclipse.usc.edu:10001
