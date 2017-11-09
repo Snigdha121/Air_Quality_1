@@ -19,7 +19,7 @@ parser.add_argument("input_file", help="Input file with configurations")
 args = parser.parse_args()
 
 # Logging setup
-logging.basicConfig(filename=args.output_file, level=logging.DEBUG,
+logging.basicConfig(filename=args.output_file, level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     filemode='w')
 
@@ -29,10 +29,20 @@ settings.read(args.input_file)
 
 # Broker parameters (from config file)
 iotsc_broker = str(settings.get('dashboard', 'url'))
-iotsc_port = int(settings.get('dashboard', 'port'))
+iotsc_port = int(settings.get('dashboard', 'iotsc_port'))
 iotsc_access_token = str(settings.get('dashboard', 'access_token'))
 iotsc_topic_telemetry = str(settings.get('dashboard', 'topic_telemetry'))
 iotsc_topic_attributes = str(settings.get('dashboard', 'topic_attributes'))
+
+#I3 Broker configurations
+i3_broker = str(settings.get('IMSCBroker', 'i3_url'))
+i3_port = str(settings.get('IMSCBroker', 'i3_port'))
+i3_topic = str(settings.get('IMSCBroker', 'i3_topic'))
+i3_user_name = str(settings.get('IMSCBroker', 'i3_user_name'))
+i3_password = str(settings.get('IMSCBroker', 'i3_password'))
+
+#Eclipse Broker
+eclipse_broker="eclipse.usc.edu"
 
 # Sensors dictionary
 sensors = {}
@@ -76,17 +86,32 @@ next_sample = {}
 
 # MQTT callback function after connection
 def on_connect(client, userdata, flags, rc):
-    logging.info('Connected flags ' + str(flags) + ' Result code ' + str(rc) + ' Client_id  ' + str(client))
+    ##Commenting the below line to minimise log overhead	
+    ##logging.info('Connected flags ' + str(flags) + ' Result code ' + str(rc) + ' Client_id  ' + str(client))
+    return
 
 # MQTT callback function when a message is received
 def on_message(client, userdata, msg):
-    logging.info("Message received  " + msg.topic + " " + msg.payload)
+    ##Commenting the below line to minimise log overhead	
+    ##logging.info("Message received  " + msg.topic + " " + msg.payload)
+    return
 
 # Connecting to IoTSc broker
 iotsc_client = mqtt.Client()
 iotsc_client.on_connect = on_connect
 iotsc_client.on_message = on_message
 iotsc_client.username_pw_set(iotsc_access_token)
+
+i3_client = mqtt.Client(i3_user_name)
+i3_client.on_connect = on_connect
+i3_client.on_message = on_message
+i3_client.username_pw_set(i3_user_name, i3_password)
+
+#Eclipse connection
+eclipse_client = mqtt.Client("eclipse")
+eclipse_client.on_connect = on_connect
+eclipse_client.on_message = on_message
+
 
 connected = False
 while connected == False:
@@ -99,10 +124,34 @@ while connected == False:
         logging.critical('Exception' + str(e))
         time.sleep(1)
 
+connected_i3 = False
+while connected_i3 == False:
+    try:    
+        logging.info('Connecting to i3 broker...')
+        i3_client.connect(i3_broker, i3_port, 60)
+        i3_client.loop_start()
+        connected_i3 = True
+    except Exception as e:
+        logging.critical('Exception' + str(e))
+        time.sleep(1)
+
+connected_eclipse = False
+while connected_eclipse == False:
+    try:    
+        logging.info('Connecting to eclipsebroker...')
+	eclipse_client.connect(eclipse_broker)
+        eclipse_client.loop_start()
+        connected_eclipse = True
+    except Exception as e:
+        logging.critical('Exception' + str(e))
+        time.sleep(1)
+
 # Initialize the dictionary of next sample timestamp
 cur_time_ms = int(time.time() * 1000)
 for k,v in sensors.items():
     next_sample[k] = cur_time_ms + v[4]
+
+next_i3_publish = int(time.time())
 
 while True:
     for k,v in sensors.items():
@@ -114,6 +163,8 @@ while True:
             data = None
 
             cur_time_ms = int(time.time() * 1000)
+            cur_time = int(time.time())
+
             try:
                 # DHT Temp
                 if k == 'dht_temp' and cur_time_ms > next_sample[k]:
@@ -208,8 +259,16 @@ while True:
                 if data is not None:
                     last_telemetry[topic] = data
                     iotsc_client.publish(iotsc_topic_telemetry, json.dumps(last_telemetry), 1)
+                    if cur_time > next_i3_publish :
+                        next_i3_publish = cur_time + 15
+                        i3_client.publish(i3_topic, json.dumps(last_telemetry), 1)
+                        eclipse_client.publish(i3_topic, json.dumps(last_telemetry), 1)
+
+
         else:
             continue
 
     # Update status of sensor
     iotsc_client.publish(iotsc_topic_attributes, json.dumps(last_attributes), 1)
+    eclipse_client.publish(i3_topic, json.dumps(last_telemetry), 1)
+
