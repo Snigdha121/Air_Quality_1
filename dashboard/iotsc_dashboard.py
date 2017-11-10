@@ -1,5 +1,9 @@
 from grove import grovepi
 from grove import grove_i2c_digital_light_sensor as grove_light_sensor
+import time, signal, sys
+sys.path.append('/home/pi/iotsc/dashboard/Adafruit_ADS1x15')
+
+from Adafruit_ADS1x15 import ADS1x15
 
 import paho.mqtt.client as mqtt
 import time
@@ -10,6 +14,32 @@ import json
 import logging
 import configparser
 import argparse
+
+
+####I2c ADC MUX Configuration##########
+ADS1115 = 0x01	# 16-bit ADC
+
+# Select the gain
+# gain = 6144  # +/- 6.144V
+gain = 4096  # +/- 4.096V
+# gain = 2048  # +/- 2.048V
+# gain = 1024  # +/- 1.024V
+# gain = 512   # +/- 0.512V
+# gain = 256   # +/- 0.256V
+
+# Select the sample rate
+# sps = 8    # 8 samples per second
+# sps = 16   # 16 samples per second
+# sps = 32   # 32 samples per second
+# sps = 64   # 64 samples per second
+# sps = 128  # 128 samples per second
+sps = 250  # 250 samples per second
+# sps = 475  # 475 samples per second
+# sps = 860  # 860 samples per second
+
+###########################################
+
+
 
 
 # Parse the arguments
@@ -26,6 +56,10 @@ logging.basicConfig(filename=args.output_file, level=logging.INFO,
 # Configuration file
 settings = configparser.ConfigParser()
 settings.read(args.input_file)
+
+# Device Identifier
+iotsc_id = str(settings.get('id', 'myid'))
+
 
 # Broker parameters (from config file)
 iotsc_broker = str(settings.get('dashboard', 'url'))
@@ -77,9 +111,9 @@ if 'sound' in k:
     grovepi.pinMode(sensors['sound'][3], "INPUT")
 # Gas sensors are all connected with an extra board with MCP3008 chip
 if 'gas_mq2' in k or 'gas_mq3' in k or 'gas_mq5' in k or 'gas_mq9' in k:
-    gas_sensors = Adafruit_MCP3008.MCP3008(spi=SPI.SpiDev(0, 1))
+    gas_sensors = ADS1x15(ic=ADS1115)
+    adc = gas_sensors
 
-# Attributes and Telemetry dictionaries
 last_attributes = {}
 last_telemetry = {}
 next_sample = {}
@@ -230,22 +264,22 @@ while True:
                     next_sample[k] = cur_time_ms + interval
                 # Gas MQ2
                 elif k == 'gas_mq2' and cur_time_ms > next_sample[k]:
-                    data = gas_sensors.read_adc(port)
+		    data = adc.readRaw(0, gain, sps) 
                     logging.debug("Reading Gas MQ2 " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 # Gas MQ3
                 elif k == 'gas_mq3' and cur_time_ms > next_sample[k]:
-                    data = gas_sensors.read_adc(port)
+		    data = adc.readRaw(1, gain, sps) 
                     logging.debug("Reading Gas MQ3 " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 # Gas MQ5
                 elif k == 'gas_mq5' and cur_time_ms > next_sample[k]:
-                    data = gas_sensors.read_adc(port)
+		    data = adc.readRaw(2, gain, sps) 
                     logging.debug("Reading Gas MQ5 " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 # Gas MQ9
                 elif k == 'gas_mq9' and cur_time_ms > next_sample[k]:
-                    data = gas_sensors.read_adc(port)
+		    data = adc.readRaw(3, gain, sps) 
                     logging.debug("Reading Gas MQ9 " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 else:
@@ -258,9 +292,11 @@ while True:
                 # Publish the data (if valid)
                 if data is not None:
                     last_telemetry[topic] = data
+		    last_telemetry["ID"]=iotsc_id
                     iotsc_client.publish(iotsc_topic_telemetry, json.dumps(last_telemetry), 1)
                     if cur_time > next_i3_publish :
                         next_i3_publish = cur_time + 15
+			print last_telemetry
                         i3_client.publish(i3_topic, json.dumps(last_telemetry), 1)
                         eclipse_client.publish(i3_topic, json.dumps(last_telemetry), 1)
 

@@ -8,12 +8,16 @@ topic_attributes: v1/devices/me/attributes
 [IMSCBroker]
 i3_url: imscspark3.usc.edu
 i3_port: 1880
-i3_topic: USC/UPC/sensor1
+i3_topic: USC/UPC/sensor2
 i3_user_name: iottestbed
 i3_password: j7B764
 
 [GrafanaBroker]
 eclipse_url: eclipse.usc.edu
+
+[id]
+myid: 9003
+
 
 [sensor1]
 id: dht_temp
@@ -75,7 +79,7 @@ telemetry: Sound
 id: gas_mq2
 type: sensor
 bus: analog
-port: 3
+port: 1
 sampling: 5000
 telemetry: gas_mq2
 
@@ -91,7 +95,7 @@ telemetry: gas_mq3
 id: gas_mq5
 type: sensor
 bus: analog
-port: 1
+port: 3
 sampling: 5000
 telemetry: gas_mq5
 
@@ -99,7 +103,7 @@ telemetry: gas_mq5
 id: gas_mq9
 type: sensor
 bus: analog
-port: 0
+port: 4
 sampling: 5000
 telemetry: gas_mq9
 
