@@ -14,6 +14,7 @@ import json
 import logging
 import configparser
 import argparse
+import os
 
 
 ####I2c ADC MUX Configuration##########
@@ -62,11 +63,11 @@ iotsc_id = str(settings.get('id', 'myid'))
 
 
 # Broker parameters (from config file)
-iotsc_broker = str(settings.get('dashboard', 'url'))
-iotsc_port = int(settings.get('dashboard', 'iotsc_port'))
-iotsc_access_token = str(settings.get('dashboard', 'access_token'))
-iotsc_topic_telemetry = str(settings.get('dashboard', 'topic_telemetry'))
-iotsc_topic_attributes = str(settings.get('dashboard', 'topic_attributes'))
+#iotsc_broker = str(settings.get('dashboard', 'url'))
+#iotsc_port = int(settings.get('dashboard', 'iotsc_port'))
+#iotsc_access_token = str(settings.get('dashboard', 'access_token'))
+#iotsc_topic_telemetry = str(settings.get('dashboard', 'topic_telemetry'))
+#iotsc_topic_attributes = str(settings.get('dashboard', 'topic_attributes'))
 
 #I3 Broker configurations
 i3_broker = str(settings.get('IMSCBroker', 'i3_url'))
@@ -78,8 +79,14 @@ i3_password = str(settings.get('IMSCBroker', 'i3_password'))
 #Eclipse Broker
 eclipse_broker="eclipse.usc.edu"
 
+
+#Bluetooth Broker
+bluetooth_broker="localhost"
+
+
 # Sensors dictionary
 sensors = {}
+bluetooth_payload = {}
 
 # Set up the sensors settings (from config file)
 for section in settings.sections():
@@ -131,32 +138,37 @@ def on_message(client, userdata, msg):
     return
 
 # Connecting to IoTSc broker
-iotsc_client = mqtt.Client()
-iotsc_client.on_connect = on_connect
-iotsc_client.on_message = on_message
-iotsc_client.username_pw_set(iotsc_access_token)
+#iotsc_client = mqtt.Client()
+#iotsc_client.on_connect = on_connect
+#iotsc_client.on_message = on_message
+#iotsc_client.username_pw_set(iotsc_access_token)
 
 i3_client = mqtt.Client(i3_user_name)
 i3_client.on_connect = on_connect
 i3_client.on_message = on_message
 i3_client.username_pw_set(i3_user_name, i3_password)
 
+
 #Eclipse connection
-eclipse_client = mqtt.Client("eclipse")
-eclipse_client.on_connect = on_connect
-eclipse_client.on_message = on_message
+#eclipse_client = mqtt.Client("eclipse")
+#eclipse_client.on_connect = on_connect
+#eclipse_client.on_message = on_message
 
+#Bluetooth broker connection
+bluetooth_client = mqtt.Client("blt")
+bluetooth_client.on_connect = on_connect
+bluetooth_client.on_message = on_message
 
-connected = False
-while connected == False:
-    try:    
-        logging.info('Connecting to broker...')
-        iotsc_client.connect(iotsc_broker, iotsc_port, 60)
-        iotsc_client.loop_start()
-        connected = True
-    except Exception as e:
-        logging.critical('Exception' + str(e))
-        time.sleep(1)
+#connected = False
+#while connected == False:
+#    try:    
+#        logging.info('Connecting to broker...')
+#        iotsc_client.connect(iotsc_broker, iotsc_port, 60)
+#        iotsc_client.loop_start()
+#        connected = True
+#    except Exception as e:
+#        logging.critical('Exception' + str(e))
+#        time.sleep(1)
 
 connected_i3 = False
 while connected_i3 == False:
@@ -180,12 +192,25 @@ while connected_eclipse == False:
         logging.critical('Exception' + str(e))
         time.sleep(1)
 
+connected_blt = False
+while connected_blt == False:
+    try:    
+        logging.info('Connecting to bluetooth-broker...')
+	bluetooth_client.connect(bluetooth_broker)
+        bluetooth_client.loop_start()
+        connected_blt = True
+    except Exception as e:
+        logging.critical('Exception' + str(e))
+        time.sleep(1)
+
 # Initialize the dictionary of next sample timestamp
 cur_time_ms = int(time.time() * 1000)
 for k,v in sensors.items():
     next_sample[k] = cur_time_ms + v[4]
 
 next_i3_publish = int(time.time())
+
+
 
 while True:
     for k,v in sensors.items():
@@ -204,6 +229,7 @@ while True:
                 if k == 'dht_temp' and cur_time_ms > next_sample[k]:
                     [temp, hum] = grovepi.dht(port, 1)
                     temp = sorted([-40, temp, 50])[1]
+		    bluetooth_payload["temp"]=temp	
                     if not math.isnan(temp):
                         data = float("{0:.2f}".format(temp))
                         logging.debug("Reading DHT temp " + str(data))
@@ -212,6 +238,7 @@ while True:
                 elif k == 'dht_hum' and cur_time_ms > next_sample[k]:
                     [temp, hum] = grovepi.dht(port, 1)
                     hum = sorted([5, hum, 99])[1]
+		    bluetooth_payload["hum"]=hum	
                     if not math.isnan(hum):
                         data = hum
                         logging.debug("Reading DHT hum " + str(data))
@@ -232,6 +259,7 @@ while True:
                     val = TSL2561.readLux(gain)
                     data = val[4]
                     data = float("{0:.2f}".format(data))
+		    bluetooth_payload["light"]=date	
                     logging.debug("Reading Light Digital " + str(data))
                     next_sample[k] = cur_time_ms + interval
                 # PIR
@@ -293,18 +321,20 @@ while True:
                 if data is not None:
                     last_telemetry[topic] = data
 		    last_telemetry["ID"]=iotsc_id
-                    iotsc_client.publish(iotsc_topic_telemetry, json.dumps(last_telemetry), 1)
+#                    iotsc_client.publish(iotsc_topic_telemetry, json.dumps(last_telemetry), 1)
+
                     if cur_time > next_i3_publish :
                         next_i3_publish = cur_time + 15
 			print last_telemetry
                         i3_client.publish(i3_topic, json.dumps(last_telemetry), 1)
-                        eclipse_client.publish(i3_topic, json.dumps(last_telemetry), 1)
-
+#                        eclipse_client.publish(i3_topic, json.dumps(last_telemetry), 1)
+                        bluetooth_client.publish(i3_topic, json.dumps(last_telemetry), 1)
 
         else:
             continue
 
     # Update status of sensor
-    iotsc_client.publish(iotsc_topic_attributes, json.dumps(last_attributes), 1)
+#    iotsc_client.publish(iotsc_topic_attributes, json.dumps(last_attributes), 1)
     eclipse_client.publish(i3_topic, json.dumps(last_telemetry), 1)
+
 
