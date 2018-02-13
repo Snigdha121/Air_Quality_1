@@ -6,9 +6,9 @@ topic_telemetry: v1/devices/me/telemetry
 topic_attributes: v1/devices/me/attributes
 
 [IMSCBroker]
-i3_url: imscspark3.usc.edu
+i3_url: dsicloud3.usc.edu
 i3_port: 1880
-i3_topic: USC/UPC/sensor2
+i3_topic: USC/UPC/sensor1
 i3_user_name: iottestbed
 i3_password: j7B764
 
@@ -16,7 +16,7 @@ i3_password: j7B764
 eclipse_url: eclipse.usc.edu
 
 [id]
-myid: 9003
+myid: 9014
 
 
 [sensor1]

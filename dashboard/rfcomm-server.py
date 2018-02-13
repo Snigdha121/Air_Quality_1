@@ -26,6 +26,7 @@ sensor_data["gas_MQ9"]=0
 sensor_data["sound"]=0
 
 
+<<<<<<< HEAD
 ################Message Queue#####################
 Transporter_Queue={} #Dictionary storing messages at the intermediate nodes (used while the phone drops the messages
 Transporter_Queue["Blue"]={}
@@ -33,6 +34,8 @@ Transporter_Queue["Blue"]={}
 Transporter_Queue["Red"]=0
 Transporter_Queue["Green"]=0
 
+=======
+>>>>>>> 8bf21a84e3009ab4372a05be7b6fa06233d3b8cf
 
 time.sleep(5)
 
@@ -143,6 +146,7 @@ while True:
 			if len(data) == 0: break
 			if data == "data":
 				#print json.dumps(sensor_data)
+<<<<<<< HEAD
 				sensor_data["timestamp"]=str(int(round(time.time() * 1000)))
 				logging.info("Timestamp is %s",str(sensor_data["timestamp"]))
 				client_sock.send(json.dumps(sensor_data))
@@ -194,6 +198,18 @@ while True:
 			logging.info("Message Received is %s",str(data))
 		logging.info("Outside the while loop")
 		#client_sock.close()
+=======
+				client_sock.send(json.dumps(sensor_data))
+			if data == "reboot":
+				os.system('sudo shutdown -r now')
+			if data == "disconnect":
+				logging.info("Exiting the loop")
+				client_sock.close()
+				break
+			data = client_sock.recv(1024)
+			logging.info("Message Received is %s",str(data))
+		client_sock.close()
+>>>>>>> 8bf21a84e3009ab4372a05be7b6fa06233d3b8cf
 	except IOError:
     		pass
 		client_sock.close()

@@ -1,9 +1,16 @@
 [Unit]
 Description=Bluetooth application for accessing sensor data
+<<<<<<< HEAD
 After=network.target
 
 [Service]
 User=pi
+=======
+After=bluetooth.target
+
+[Service]
+User=root
+>>>>>>> 8bf21a84e3009ab4372a05be7b6fa06233d3b8cf
 ExecStart=/usr/bin/python /home/pi/iotsc/dashboard/rfcomm-server.py
 
 [Install]
