@@ -203,17 +203,11 @@ while True:
 
                     if cur_time > next_i3_publish :
                         next_i3_publish = cur_time + 30
-			print("***********************************************************")
-			print(last_telemetry)
-			print("***********************************************************")
                         i3_client.publish(i3_topic, json.dumps(last_telemetry), 1)
 			for i in last_telemetry:
 				if i == "gas_mq2":
-					#print("##########################################################")	
-					#print(last_telemetry[i])
 					contents["fields"]["gas_mq2"]=int(last_telemetry[i])
 				if i == "gas_mq3":
-					print(last_telemetry[i])
 					contents["fields"]["gas_mq3"]=int(last_telemetry[i])
 				if i == "gas_mq5":
 					contents["fields"]["gas_mq5"]=int(last_telemetry[i])
@@ -222,7 +216,6 @@ while True:
 			
 			if (len(contents["fields"])==4):
 				json_body.append(contents)
-				#print(json.dumps(contents))
 				print ("write_points: {0}".format(json_body))
 				IFclient.write_points(json_body)
 				 	
